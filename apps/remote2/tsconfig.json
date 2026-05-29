@@ -1,0 +1,7 @@
+{
+  "extends": "@mfe/tsconfig/base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["src", "vite.config.ts"]
+}
