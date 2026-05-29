@@ -20,7 +20,7 @@
 
 ## Overview
 
-Welcome to the **Microfrontend Modular Federation Boilerplate**, a production-grade blueprint designed for architecting scalable, loosely-coupled, and highly performant front-end systems. Built around the concept of **Microfrontends (MFEs)**, this workspace lets engineering teams build, test, and deploy features independently without breaking the global application shell.
+This boilerplate demonstrates enterprise-level Micro Frontend architecture using Turborepo, Vite, Module Federation, Docker, and Nginx. It is a production-grade blueprint designed for architecting scalable, loosely-coupled, and highly performant front-end systems. Built around the concept of **Microfrontends (MFEs)**, this workspace lets engineering teams build, test, and deploy features independently without breaking the global application shell.
 
 ### Core Philosophy
 

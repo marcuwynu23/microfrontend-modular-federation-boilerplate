@@ -2,7 +2,7 @@
   "name": "microfrontend-modular-federation-boilerplate",
   "private": true,
   "version": "1.0.0",
-  "description": "Enterprise-level Micro Frontend architecture using Turborepo, Vite, Module Federation, Docker, and Nginx",
+  "description": "This boilerplate demonstrates enterprise-level Micro Frontend architecture using Turborepo, Vite, Module Federation, Docker, and Nginx",
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
