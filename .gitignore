@@ -1,0 +1,15 @@
+# Dependency Directories
+node_modules/
+.pnpm-store/
+
+# Build and Temp Outputs
+dist/
+build/
+.turbo/
+
+# System / IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
