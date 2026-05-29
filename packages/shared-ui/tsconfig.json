@@ -1,0 +1,4 @@
+{
+  "extends": "@mfe/tsconfig/base.json",
+  "include": ["src"]
+}
