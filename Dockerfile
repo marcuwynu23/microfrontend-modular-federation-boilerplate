@@ -9,7 +9,7 @@ FROM base AS installer
 WORKDIR /app
 
 # Copy lockfile and monorepo files
-COPY pnpm-workspace.yaml package.json turbo.json ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 # Copy all package.json files to optimize Docker layers caching
 COPY apps/host/package.json ./apps/host/package.json
 COPY apps/remote1/package.json ./apps/remote1/package.json
@@ -18,14 +18,16 @@ COPY packages/shared-ui/package.json ./packages/shared-ui/package.json
 COPY packages/tsconfig/package.json ./packages/tsconfig/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 
-# Install dependencies (fallback to non-frozen if lockfile is missing locally)
-RUN pnpm install --no-frozen-lockfile
+# Install dependencies (frozen lockfile for reproducible builds)
+RUN pnpm install --frozen-lockfile
 
 # Stage 3: Builder stage to compile code
 FROM installer AS builder
 ARG APP_NAME
 WORKDIR /app
 COPY . .
+# Re-link dependencies to fix Windows junction symlinks picked up by Docker Desktop
+RUN pnpm install --frozen-lockfile --offline
 # Compile the specified MFE using pnpm filter and vite production mode
 RUN pnpm --filter=${APP_NAME} build
 
