@@ -289,9 +289,9 @@ function App() {
                   In production, all built assets are containerized and served using individual Nginx servers. A centralized <strong>Nginx Gateway reverse-proxy</strong> intercepts all client traffic and routes assets dynamically based on context subpaths:
                 </p>
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)', fontFamily: 'monospace', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div>🌐 <span style={{ color: '#818cf8' }}>http://localhost/</span> - Serves the main Host Shell compiled assets</div>
-                  <div>📊 <span style={{ color: '#10b981' }}>http://localhost/remote1/</span> - Proxies to the Dashboard MFE static assets</div>
-                  <div>🛡️ <span style={{ color: '#f59e0b' }}>http://localhost/remote2/</span> - Proxies to the Security Profile MFE static assets</div>
+                  <div>🌐 <span style={{ color: '#818cf8' }}>{import.meta.env.VITE_HOST_URL || 'http://localhost'}/</span> - Serves the main Host Shell compiled assets</div>
+                  <div>📊 <span style={{ color: '#10b981' }}>{import.meta.env.VITE_REMOTE1_PROXY_PATH || '/remote1/'}</span> - Proxies to the Dashboard MFE static assets</div>
+                  <div>🛡️ <span style={{ color: '#f59e0b' }}>{import.meta.env.VITE_REMOTE2_PROXY_PATH || '/remote2/'}</span> - Proxies to the Security Profile MFE static assets</div>
                 </div>
               </Card>
             </div>

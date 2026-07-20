@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5002 --strictPort",
+    "dev": "vite preview --port 5002 --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port 5002 --strictPort"
+    "preview": "vite preview --port 5002 --strictPort",
+    "dev:hmr": "vite --port 5002 --strictPort"
   },
   "dependencies": {
     "react": "^18.3.1",

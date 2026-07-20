@@ -14,6 +14,9 @@ export default defineConfig({
       shared: ['react', 'react-dom']
     })
   ],
+  server: {
+    cors: true
+  },
   build: {
     target: 'esnext',
     minify: false,
