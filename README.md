@@ -11,6 +11,7 @@
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.4.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
     <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-3.8-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
     <a href="https://nginx.org/"><img src="https://img.shields.io/badge/Nginx-1.25-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx" /></a>
+    <a href="https://capacitorjs.com/"><img src="https://img.shields.io/badge/Capacitor-8.4.2-119EFF?style=for-the-badge&logo=capacitor&logoColor=white" alt="Capacitor" /></a>
   </p>
   
   <p><b>An enterprise-ready, high-performance monorepo boilerplate for scalable Micro Frontend applications</b></p>
@@ -211,6 +212,152 @@ To simulate the exact production configuration locally via Docker, Nginx, and si
    ```bash
    pnpm docker:down
    ```
+
+---
+
+## Mobile (Capacitor Android)
+
+### Overview
+
+This boilerplate includes a [Capacitor](https://capacitorjs.com/) Android subproject at `apps/capacitor/` that wraps the Host MFE shell in a native Android WebView. The microfrontend architecture is preserved — remote MFEs are loaded at runtime from dev servers (development) or configured remote URLs (production), just like in the browser.
+
+### Project Structure
+
+```
+apps/capacitor/
+├── package.json              # @capacitor/core, @capacitor/cli, @capacitor/android
+├── capacitor.config.ts       # WebView config (appId, webDir, cleartext, live reload)
+├── tsconfig.json
+├── android/                  # Android native platform (generated + synced)
+│   ├── app/
+│   │   ├── build.gradle
+│   │   └── src/
+│   │       ├── main/java/com/mfe/portal/MainActivity.java
+│   │       ├── test/java/com/mfe/portal/   # Unit tests (JVM)
+│   │       └── androidTest/java/com/mfe/portal/  # Instrumented tests (device)
+│   ├── gradle/
+│   ├── build.gradle
+│   └── settings.gradle
+└── .gitignore
+```
+
+### Prerequisites
+
+- **Android Studio** (Hedgehog or later)
+- **JDK 17** or later
+- **Android SDK** 34+ (installed via Android Studio SDK Manager)
+- An **Android device** with USB debugging enabled, or an **emulator** (API 34 recommended)
+
+### Development Workflow
+
+1. **Start the MFE dev servers:**
+   ```bash
+   pnpm dev
+   ```
+   This starts Host on `:5000`, Remote1 on `:5001`, Remote2 on `:5002`.
+
+2. **Configure Android remote URLs:**
+   Copy the Android-specific env file so the Host knows how to reach the remotes from the device/emulator:
+   ```bash
+   copy apps/host/.env.capacitor.example apps/host/.env.development.local
+   ```
+   This sets `VITE_REMOTE1_URL=http://10.0.2.2:5001/assets/remoteEntry.js` and `VITE_REMOTE2_URL=http://10.0.2.2:5002/assets/remoteEntry.js` — `10.0.2.2` is the Android emulator's alias for the host machine's `localhost`.
+
+   > For a **physical device**, replace `10.0.2.2` with your machine's LAN IP address.
+
+3. **Build the Host and sync to Capacitor:**
+   ```bash
+   pnpm mobile:build
+   ```
+
+4. **Run on Android:**
+   ```bash
+   pnpm mobile:run:android
+   ```
+   This launches the app on a connected device or emulator. The Android WebView loads the Host build from local assets and fetches remote MFE entry files over the network.
+
+   **Live Reload** (optional): set `CAP_DEV=true` before running to load the entire app from the Vite dev server instead:
+   ```bash
+   $env:CAP_DEV='true'; pnpm mobile:run:android
+   ```
+
+### Mobile Module Federation Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Android Device
+    participant WV as Android WebView
+    participant Cap as Capacitor Bridge
+    participant Host as Host App (assets or dev server)
+    participant R1 as Remote 1 (network)
+    participant R2 as Remote 2 (network)
+
+    User->>WV: 1. App launches
+    WV->>Cap: 2. Capacitor initializes WebView
+    Cap->>Host: 3. Load index.html + JS from local assets or server URL
+    Host-->>WV: 4. Bootstraps React + Module Federation runtime
+
+    Note over WV: Host mounts and discovers remotes...
+
+    WV->>R1: 5. Fetch remoteEntry.js (10.0.2.2:5001 or configured URL)
+    R1-->>WV: 6. Dashboard manifest & shared libs resolved
+    WV->>R2: 7. Fetch remoteEntry.js (10.0.2.2:5002 or configured URL)
+    R2-->>WV: 8. Profile manifest & shared libs resolved
+
+    Note over WV: MFEs rendered inside Suspense & ErrorBoundary
+```
+
+### Production Build
+
+For a release build served from a backend rather than local dev servers:
+
+```bash
+# 1. Build all apps with production remote URLs
+VITE_REMOTE1_URL=https://your-server.com/remote1/assets/remoteEntry.js \
+VITE_REMOTE2_URL=https://your-server.com/remote2/assets/remoteEntry.js \
+pnpm mobile:build
+
+# 2. Sync to Android
+pnpm mobile:sync:android
+
+# 3. Open Android Studio for signing and APK generation
+pnpm mobile:open:android
+```
+
+### Running Tests
+
+```bash
+# Navigate to the Android project
+cd apps/capacitor/android
+
+# Unit tests (run on JVM, no device needed)
+./gradlew test
+
+# Instrumentation tests (run on device/emulator)
+./gradlew connectedAndroidTest
+```
+
+| Test Class | Type | What it verifies |
+|------------|------|-----------------|
+| `ExampleUnitTest` | Unit | Basic sanity |
+| `CapacitorConfigTest` | Unit | Capacitor config JSON (appId, appName, webDir, cleartext) |
+| `BuildConfigTest` | Unit | Android build config (package name, version, build type) |
+| `ApplicationInfoTest` | Instrumentation | Package name, app label, INTERNET permission |
+| `AppLaunchTest` | Instrumentation | Activity launches, WebView renders `#root`, JS enabled |
+| `MfeConnectivityTest` | Instrumentation | Error fallback UI, React shared lib loaded |
+
+### Configuration Reference
+
+| Config | Location | Purpose |
+|--------|----------|---------|
+| `appId: "com.mfe.portal"` | `capacitor.config.ts` | Android application ID |
+| `webDir: "../host/dist"` | `capacitor.config.ts` | Points to Host build output |
+| `server.cleartext: true` | `capacitor.config.ts` | Allows HTTP for MFE loading |
+| `server.url` | `capacitor.config.ts` | Live reload URL (set via `CAP_DEV`) |
+| `android:usesCleartextTraffic` | `AndroidManifest.xml` | System-level HTTP permission |
+| `VITE_REMOTE1_URL` | Host `.env` | Remote1 entry point URL |
+| `VITE_REMOTE2_URL` | Host `.env` | Remote2 entry point URL |
 
 ---
 
