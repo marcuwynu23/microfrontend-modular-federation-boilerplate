@@ -9,7 +9,13 @@
     "lint": "turbo run lint",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "docker:logs": "docker compose logs -f",
+    "mobile:build": "pnpm --filter host build && pnpm --filter capacitor cap:copy",
+    "mobile:sync": "pnpm --filter capacitor cap:sync",
+    "mobile:sync:android": "pnpm --filter capacitor cap:sync:android",
+    "mobile:open:android": "pnpm --filter capacitor cap:open:android",
+    "mobile:run:android": "pnpm --filter capacitor cap:run:android",
+    "mobile:dev": "echo 'See apps/host/.env.capacitor.example for Android dev setup. Copy it to apps/host/.env.development.local and run: pnpm dev'"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
