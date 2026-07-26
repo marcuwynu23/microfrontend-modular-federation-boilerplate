@@ -1,0 +1,51 @@
+diff --git a/out/targets/nsis/nsisScriptGenerator.js b/out/targets/nsis/nsisScriptGenerator.js
+index 729cdc807714cf6725dd6a8146ef24261b071e11..880817fd6373e67d4171abc9d3a8cd80cd7fb963 100644
+--- a/out/targets/nsis/nsisScriptGenerator.js
++++ b/out/targets/nsis/nsisScriptGenerator.js	
+@@ -3,24 +3,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.NsisScriptGenerator = void 0;
+ exports.nsisEscapeString = nsisEscapeString;
+ const builder_util_1 = require("builder-util");
++
++function toShortPath(p) {
++    if (process.platform !== "win32") return p;
++    if (!p.includes(" ")) return p;
++    try {
++        const execSync = require("child_process").execFileSync;
++        const psCmd = `&{` +
++            `$p='${p.replace(/'/g, "''")}';` +
++            `$f=New-Object -ComObject Scripting.FileSystemObject;` +
++            `try{$s=$f.GetFolder($p).ShortPath;if($s){$s}}catch{$p}` +
++            `}`;
++        const result = execSync("powershell.exe", ["-NoProfile", "-Command", psCmd], { encoding: "utf8", timeout: 10000 });
++        const shortPath = result.trim().split(/\r?\n/)[0].trim();
++        if (shortPath && shortPath.length > 0 && shortPath !== "null") return shortPath;
++    } catch {}
++    return p;
++}
++
+ class NsisScriptGenerator {
+     constructor() {
+         this.lines = [];
+     }
+     addIncludeDir(file) {
+-        this.lines.push(`!addincludedir "${file}"`);
++        this.lines.push(`!addincludedir "${toShortPath(file)}"`);
+     }
+     addPluginDir(pluginArch, dir) {
+-        this.lines.push(`!addplugindir /${pluginArch} "${dir}"`);
++        this.lines.push(`!addplugindir /${pluginArch} "${toShortPath(dir)}"`);
+     }
+     include(file) {
+-        this.lines.push(`!include "${file}"`);
++        this.lines.push(`!include "${toShortPath(file)}"`);
+     }
+     macro(name, lines) {
+         this.lines.push(`!macro ${name}`, `  ${(Array.isArray(lines) ? lines : lines.lines).join("\n  ")}`, `!macroend\n`);
+     }
+     file(outputName, file) {
+-        this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`);
++        this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${toShortPath(file)}"`);
+     }
+     insertMacro(name, parameters) {
+         this.lines.push(`!insertmacro ${name} ${parameters}`);
