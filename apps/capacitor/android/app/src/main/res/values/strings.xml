@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MFE Portal</string>
+    <string name="title_activity_main">MFE Portal</string>
+    <string name="package_name">com.mfe.portal</string>
+    <string name="custom_url_scheme">com.mfe.portal</string>
+</resources>
