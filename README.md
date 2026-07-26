@@ -12,6 +12,7 @@
     <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-3.8-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
     <a href="https://nginx.org/"><img src="https://img.shields.io/badge/Nginx-1.25-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx" /></a>
     <a href="https://capacitorjs.com/"><img src="https://img.shields.io/badge/Capacitor-8.4.2-119EFF?style=for-the-badge&logo=capacitor&logoColor=white" alt="Capacitor" /></a>
+    <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-43.2.0-47848F?style=for-the-badge&logo=electron&logoColor=white" alt="Electron" /></a>
   </p>
   
   <p><b>An enterprise-ready, high-performance monorepo boilerplate for scalable Micro Frontend applications</b></p>
@@ -361,7 +362,107 @@ cd apps/capacitor/android
 
 ---
 
-## Module Federation Deep Dive
+## Desktop (Electron)
+
+### Overview
+
+This boilerplate includes an [Electron](https://www.electronjs.org/) desktop application at `apps/desktop/` that wraps the Host MFE shell in a native Windows/macOS/Linux window. The microfrontend architecture is preserved — remote MFEs are loaded at runtime from dev servers (development) or local files (production), just like in the browser.
+
+### Project Structure
+
+```
+apps/desktop/
+├── package.json              # electron, electron-builder
+├── electron/
+│   ├── main.js               # Main process: window creation, dev/prod URL loading
+│   └── preload.js             # Context bridge: exposes platform & isElectron
+├── build/                     # Build resources (icons, NSIS config)
+├── dist/                      # Electron-builder output (installers, unpacked)
+└── .gitignore
+```
+
+### Development Workflow
+
+1. **Start the MFE dev servers:**
+   ```bash
+   pnpm dev
+   ```
+   This starts Host on `:5000`, Remote1 on `:5001`, Remote2 on `:5002`.
+
+2. **Launch the Electron app in dev mode:**
+   ```bash
+   pnpm desktop:dev
+   ```
+   This loads `http://localhost:5000` in an Electron window with DevTools open. Remote MFEs are fetched from the running dev servers, identical to the browser workflow.
+
+3. **Build the desktop installer:**
+   ```bash
+   pnpm desktop:build
+   ```
+   This first builds the Host app via Vite, then packages everything with `electron-builder`. The output is a native installer (NSIS `.exe` on Windows).
+
+### Desktop Module Federation Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Desktop User
+    participant Win as Electron Window
+    participant Main as Main Process
+    participant Host as Host App (dev server or asar)
+    participant R1 as Remote 1 (network)
+    participant R2 as Remote 2 (network)
+
+    User->>Win: 1. Launch desktop app
+    Win->>Main: 2. Main process creates BrowserWindow
+    Main->>Host: 3. Load index.html + JS from dev server or local dist
+    Host-->>Win: 4. Bootstraps React + Module Federation runtime
+
+    Note over Win: Host mounts and discovers remotes...
+
+    Win->>R1: 5. Fetch remoteEntry.js (localhost:5001 or bundled URL)
+    R1-->>Win: 6. Dashboard manifest & shared libs resolved
+    Win->>R2: 7. Fetch remoteEntry.js (localhost:5002 or bundled URL)
+    R2-->>Win: 8. Profile manifest & shared libs resolved
+
+    Note over Win: MFEs rendered inside Suspense & ErrorBoundary
+```
+
+### Production Build
+
+For a standalone installer for distribution:
+
+```bash
+# 1. Build all apps with production remote URLs
+pnpm build
+
+# 2. Package the desktop installer
+pnpm desktop:build
+```
+
+The installer is generated in `apps/desktop/dist/`:
+- `desktop Setup 1.0.0.exe` — NSIS installer (Windows)
+- `desktop Setup 1.0.0.exe.blockmap` — Differential update metadata
+
+### Running the Packaged App
+
+After installation, the desktop app loads the pre-built Host output from `apps/host/dist/index.html` (bundled inside the ASAR archive). Remote MFEs are loaded from the remote URLs configured at build time — no dev servers required.
+
+### Configuration Reference
+
+| Config | Location | Purpose |
+|--------|----------|---------|
+| `main: "electron/main.js"` | `apps/desktop/package.json` | Electron entry point |
+| Window `1280x800` | `electron/main.js` | Default window size |
+| `contextIsolation: true` | `electron/main.js` | Security: isolates renderer from Node.js |
+| `nodeIntegration: false` | `electron/main.js` | Security: disables Node.js in renderer |
+| `preload: preload.js` | `electron/main.js` | Context bridge script |
+| Dev URL `http://localhost:5000` | `electron/main.js` | Development server target |
+| Prod path `../../host/dist` | `electron/main.js` | Production build output |
+| `electronAPI.isElectron` | `electron/preload.js` | Renderer-side Electron detection |
+| `electronAPI.platform` | `electron/preload.js` | Renderer-side OS platform string |
+
+---
 
 ### Exposing Components (Remote Side)
 Remote apps register exposed assets within their `vite.config.ts` using the federation plugin:

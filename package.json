@@ -15,7 +15,10 @@
     "mobile:sync:android": "pnpm --filter capacitor cap:sync:android",
     "mobile:open:android": "pnpm --filter capacitor cap:open:android",
     "mobile:run:android": "pnpm --filter capacitor cap:run:android",
-    "mobile:dev": "echo 'See apps/host/.env.capacitor.example for Android dev setup. Copy it to apps/host/.env.development.local and run: pnpm dev'"
+    "mobile:dev": "echo 'See apps/host/.env.capacitor.example for Android dev setup. Copy it to apps/host/.env.development.local and run: pnpm dev'",
+    "desktop:dev": "pnpm --filter desktop dev",
+    "desktop:build": "pnpm --filter desktop build",
+    "desktop:start": "pnpm --filter desktop start"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
@@ -23,5 +26,10 @@
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "app-builder-lib": "patches/app-builder-lib.patch"
+    }
   }
 }
