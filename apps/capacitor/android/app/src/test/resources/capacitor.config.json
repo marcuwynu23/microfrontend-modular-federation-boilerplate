@@ -1,0 +1,8 @@
+{
+  "appId": "com.mfe.portal",
+  "appName": "MFE Portal",
+  "webDir": "../host/dist",
+  "server": {
+    "cleartext": true
+  }
+}
